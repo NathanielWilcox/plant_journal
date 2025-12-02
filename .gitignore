@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.egg
+*.log
+
+# Django
+db.sqlite3
+*.db
+*.sqlite3
+*.sqlite3-journal
+media/
+staticfiles/
+.env
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+env.old/
+
+# Gradio / frontend artifacts
+gradio_cached_examples/
+gradio_tmp/
+.gradio/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage / testing
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.pytest_cache/

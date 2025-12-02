@@ -1,0 +1,64 @@
+{
+  "watering_schedule_enum": [
+    "daily",
+    "twice_weekly",
+    "weekly",
+    "biweekly",
+    "monthly",
+    "infrequent",
+    "moderate",
+    "consistent",
+    "when_soil_is_dry",
+    "frequent",
+    "occasionally",
+    "none"
+  ],
+  "sunlight_preference_enum": [
+    "full_sun",
+    "partial_sun",
+    "partial_shade",
+    "full_shade",
+    "bright_indirect_light",
+    "indirect_light",
+    "low_light",
+    "medium_light"
+  ],
+  "plants_by_category": {
+    "succulent": {
+      "watering_schedule": "infrequent",
+      "sunlight_preference": "full_sun",
+      "typical_hours": 6,
+      "placeholder_species": "e.g. Aloe Vera"
+    },
+    "herb": {
+      "watering_schedule": "daily",
+      "sunlight_preference": "full_sun",
+      "typical_hours": 6,
+      "placeholder_species": "e.g. Basil"
+    },
+    "fern": {
+      "watering_schedule": "consistent",
+      "sunlight_preference": "partial_shade",
+      "typical_hours": 3,
+      "placeholder_species": "e.g. Boston Fern"
+    },
+    "flowering_plant": {
+      "watering_schedule": "moderate",
+      "sunlight_preference": "bright_indirect_light",
+      "typical_hours": 4,
+      "placeholder_species": "e.g. Peace Lily"
+    },
+    "vegetable": {
+      "watering_schedule": "weekly",
+      "sunlight_preference": "full_sun",
+      "typical_hours": 6,
+      "placeholder_species": "e.g. Tomato"
+    },
+    "foliage_plant": {
+      "watering_schedule": "weekly",
+      "sunlight_preference": "bright_indirect_light",
+      "typical_hours": 4,
+      "placeholder_species": "e.g. Monstera Deliciosa"
+    }
+  }
+}

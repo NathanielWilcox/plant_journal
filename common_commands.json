@@ -1,0 +1,93 @@
+{
+    "server_commands": {
+        "django_server": "python manage.py runserver",
+        "gradio_ui": "python gradio_ui.py",
+        "run_tests": "python manage.py test"
+    },
+    "database_commands": {
+        "migrations": {
+            "create": "python manage.py makemigrations",
+            "apply": "python manage.py migrate",
+            "show": "python manage.py showmigrations"
+        },
+        "admin": {
+            "create_superuser": "python manage.py createsuperuser"
+        }
+    },
+    "api_endpoints": {
+        "base_url": "http://127.0.0.1:8000/api",
+        "plants": {
+            "list": "GET /api/plants/",
+            "create": "POST /api/plants/",
+            "detail": "GET /api/plants/{id}/",
+            "update": "PUT /api/plants/{id}/",
+            "delete": "DELETE /api/plants/{id}/"
+        },
+        "logs": {
+            "list": "GET /api/logs/",
+            "create": "POST /api/logs/",
+            "detail": "GET /api/logs/{id}/",
+            "update": "PUT /api/logs/{id}/",
+            "delete": "DELETE /api/logs/{id}/"
+        }
+    },
+    "gradio_ui": {
+        "url": "http://127.0.0.1:7860",
+        "features": [
+            "Plant Management",
+            "Care Logs",
+            "Photo Upload",
+            "Plant Templates"
+        ]
+    },
+    "environment": {
+        "venv": {
+            "create": "python -m venv venv",
+            "activate_windows": ".\\venv\\Scripts\\activate",
+            "activate_unix": "source venv/bin/activate",
+            "deactivate": "deactivate"
+        },
+        "setup": {
+            "install_dependencies": "pip install -r requirements.txt",
+            "load_env": "source .env # Linux/Mac",
+            "load_env_windows": "set -a; . ./.env; set +a"
+        }
+    },
+    "startup_sequences": {
+        "testing": {
+            "order": [
+                "environment.venv.create",
+                "environment.venv.activate_windows",
+                "environment.setup.install_dependencies",
+                "environment.setup.load_env",
+                "database_commands.migrations.apply",
+                "server_commands.run_tests"
+            ],
+            "description": "Setup and run test suite"
+        },
+        "admin": {
+            "order": [
+                "environment.venv.create",
+                "environment.venv.activate_windows",
+                "environment.setup.install_dependencies",
+                "environment.setup.load_env",
+                "database_commands.migrations.apply",
+                "database_commands.admin.create_superuser",
+                "server_commands.django_server"
+            ],
+            "description": "Setup admin environment and start server"
+        },
+        "user": {
+            "order": [
+                "environment.venv.create",
+                "environment.venv.activate_windows",
+                "environment.setup.install_dependencies",
+                "environment.setup.load_env",
+                "database_commands.migrations.apply",
+                "server_commands.django_server",
+                "server_commands.gradio_ui"
+            ],
+            "description": "Setup user environment and start all services"
+        }
+    }
+}
