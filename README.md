@@ -15,8 +15,8 @@ This is meant to be an instruction guide to explain the order of processes for P
 Clone the repository:
 
 ``` git
-git clone <repository-url>
-cd <repository-folder>
+git clone [<repository-url>](https://github.com/NathanielWilcox/plant_journal)
+cd plant_journal
 ```
 
 Create a virtual environment:
@@ -64,5 +64,3 @@ venv/ - Python virtual environment
 requirements.txt - Python dependencies
 
 This guide assumes you have Python 3.8+ and Node.js installed on your system.
-
-Replace <repository-url> and <repository-folder> with your actual repository URL and folder name.
