@@ -59,7 +59,7 @@ def create_plant(
 
 @with_auth_retry(max_retries=3)
 def list_plants(**kwargs):
-    """List all plants"""
+    """List all plants - returns list of plants or error dict"""
 
     # Merge headers safely: use decorator-injected headers if present
     headers = kwargs.get("headers") or token_validator.get_headers()
@@ -68,14 +68,17 @@ def list_plants(**kwargs):
 
     result = api_request("get", "plants/", headers=headers, params=params)
 
-    # Normalize return shape
+    # api_request already extracts data, so result is the list directly
     if isinstance(result, dict) and "error" in result:
-        return result
-    elif isinstance(result, dict) and "data" in result:
-        return {"data": result["data"]}
+        return result  # Return error as-is
+    
+    # Result is the list of plants (or wrapped in data key from serializer)
+    if isinstance(result, dict) and "data" in result:
+        return result["data"]
     elif isinstance(result, list):
-        return {"data": result}
-    return {"error": "Unexpected response format"}
+        return result
+    else:
+        return []  # Empty list if unexpected format
 
 @with_auth_retry(max_retries=3)
 def update_plant(

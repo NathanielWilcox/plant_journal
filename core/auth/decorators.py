@@ -16,14 +16,15 @@ def with_auth_retry(max_retries: int = 3, retry_delay: int = 1):
             retries = 0
             while retries < max_retries:
                 try:
-                    # Merge headers safely
-                    headers = kwargs.get("headers", {})
-                    auth_headers = token_validator.get_headers()
-                    # Ensure headers is a dict
-                    if not isinstance(headers, dict):
-                        headers = {}
-                    headers.update(auth_headers)
-                    kwargs["headers"] = headers
+                    # Merge headers safely: prefer headers supplied by caller (e.g. user token)
+                    supplied_headers = kwargs.get("headers", {})
+                    auth_headers = token_validator.get_headers() or {}
+                    # Ensure supplied_headers is a dict
+                    if not isinstance(supplied_headers, dict):
+                        supplied_headers = {}
+                    # Keep auth_headers as defaults, allow supplied_headers to override
+                    auth_headers.update(supplied_headers)
+                    kwargs["headers"] = auth_headers
 
                     return func(*args, **kwargs)
 

@@ -23,11 +23,18 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from core.auth.views import login_view, register_view
+from core.auth.views import logout_view
 
 
 urlpatterns = [
     # Admin site
     path('admin/', admin.site.urls),
+
+    # Auth endpoints (login/register)
+    path('api/auth/login/', login_view, name='auth_login'),
+    path('api/auth/register/', register_view, name='auth_register'),
+    path('api/auth/logout/', logout_view, name='auth_logout'),
 
     # API endpoints
     path('api/', include('plants.urls')),

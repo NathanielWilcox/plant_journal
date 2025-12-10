@@ -44,11 +44,19 @@ def list_logs(**kwargs):
 @with_auth_retry(max_retries=3)
 def list_logs_for_plant(plant_id, **kwargs):
     """List all logs for a specific plant"""
-    headers = token_validator.get_headers()
-    response = api_request('get', f'plants/{plant_id}/logs/', headers=headers, params=kwargs)
-    if response.status_code == 200:
-        return response.json()
-    return {"error": f"Could not fetch logs for plant {plant_id}"}
+    headers = kwargs.get("headers") or token_validator.get_headers()
+    result = api_request('get', f'plants/{plant_id}/logs/', headers=headers, params=kwargs)
+
+    if isinstance(result, dict) and "error" in result:
+        return result
+
+    # Expecting a list of logs (or wrapped in data)
+    if isinstance(result, dict) and "data" in result:
+        return {"data": result["data"]}
+    if isinstance(result, list):
+        return {"data": result}
+
+    return {"data": []}
 
 @with_auth_retry(max_retries=3)
 def update_log(log_id, log_type, water_amount=None, sunlight_hours=None, **kwargs):
@@ -64,7 +72,7 @@ def update_log(log_id, log_type, water_amount=None, sunlight_hours=None, **kwarg
     headers = kwargs.get("headers") or token_validator.get_headers()
     params = kwargs.get("params")
 
-    result = api_request("put", f"logs/{log_id}/", json=data, headers=headers, params=params)
+    result = api_request("patch", f"logs/{log_id}/", json=data, headers=headers, params=params)
     if isinstance(result, dict) and "error" in result:
         return result
 

@@ -8,7 +8,7 @@ from core.utils.utility_files import api_request
 
 CARE_DB_PATH = os.path.join(BASE_DIR, "plants", "care_db.json")
 
-# --- Helper: update care info when species changes ---
+# --- Helper: update care info when category changes ---
 def update_care_info(category: str) -> str:
     """Update care info based on category selection."""
     templates = load_plant_templates()
@@ -146,8 +146,8 @@ def ui_handle_update_plant(plant_id: int, category: str, care_level: str, locati
     
     headers = get_auth_headers(auth_state)
     result = api_request(
-        "PUT",
-        f"/plants/{plant_id}/",
+        "patch",
+        f"plants/{plant_id}/",
         headers=headers,
         json={
             "category": category,
@@ -162,15 +162,18 @@ def ui_handle_update_plant(plant_id: int, category: str, care_level: str, locati
     
     return "Plant updated successfully"
 
-def ui_handle_delete_plant(plant_id: int, auth_state: Dict) -> str:
-    """UI handler to delete a plant"""
+def ui_handle_delete_plant(plant_id: int, confirmed: bool, auth_state: Dict) -> str:
+    """UI handler to delete a plant - requires confirmation checkbox"""
     from core.utils.utility_files import is_authenticated, get_auth_headers
     
     if not is_authenticated(auth_state):
-        return "Error: Not authenticated"
+        return "❌ Error: Not authenticated"
+    
+    if not confirmed:
+        return "⚠️ Please confirm deletion"
     
     headers = get_auth_headers(auth_state)
-    result = api_request("DELETE", f"/plants/{plant_id}/", headers=headers)
+    result = api_request("delete", f"plants/{plant_id}/", headers=headers)
     
     if isinstance(result, dict) and "error" in result:
         return f"Error: {result['error']}"

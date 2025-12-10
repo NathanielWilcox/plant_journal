@@ -61,16 +61,19 @@ DEBUG=True
 **Generating secure secret keys:**
 
 For `SECRET_KEY` (Django), run this Python command:
+
 ```bash
 python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 ```
 
 For `JWT_SECRET_KEY`, run this Python command:
+
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
 Or, generate both at once with this script:
+
 ```bash
 python << 'EOF'
 from django.core.management.utils import get_random_secret_key

@@ -76,6 +76,10 @@ class Plant(models.Model):
         blank=True
     )
 
+    def __str__(self):
+        """String representation of plant"""
+        return self.name
+
     def suggest_care_settings(self):
         """Suggest care settings based on plant name and category"""
         from .utils import suggest_plant_care

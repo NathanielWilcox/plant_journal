@@ -1,5 +1,4 @@
 import json, os
-import token
 from typing import Dict, List, Optional
 import requests
 from core.settings import API_BASE_URL, BASE_DIR
@@ -10,57 +9,48 @@ from core.auth import token_validator
 from core.auth.decorators import with_auth_retry
 from core.utils.utility_files import api_request
 
-# --- Helper: update care info when species changes --- API wrapper
+# --- Helper: update care info when category changes --- API wrapper
 # Use api_request for standardized error handling and retries
 # For User Management
-@with_auth_retry(max_retries=3)
 def login_user(username: str, password: str) -> Dict:
-    """Login user and return JWT token or error dict"""
+    """Login user via API endpoint - takes username/password, returns token.
+    NO auth required - public endpoint.
+    """
     data = {"username": username, "password": password}
-    try:
-        response = requests.post(
-           f"{API_BASE_URL.rstrip('/')}/auth/login/",
-            data=data
-        )
-        result = handle_api_response(response)
-        if "error" in result:
-            return result
-        return result.get("data")
-    except Exception as e:
-        return format_error_response(e)
+    result = api_request("post", "auth/login/", json=data)
+    return result
     
 @with_auth_retry(max_retries=3)
-def get_user_account_details(user_id: int, **kwargs) -> Dict:
-    """Get user account details by user ID"""
+def get_user_account_details(**kwargs) -> Dict:
+    """Get current user account details via /users/me/ endpoint"""
     headers = kwargs.get("headers") or token_validator.get_headers()
-    result = api_request("get", f"users/{user_id}/", headers=headers)
+    result = api_request("get", "users/me/", headers=headers)
     return result
 
-@with_auth_retry(max_retries=3)
 def register_user(
     username: str,
     email: str,
     password: str,
     **kwargs
 ) -> Dict:
-    """Register a new user - NO authentication required"""
+    """Register a new user via API endpoint - NO authentication required.
+    User is automatically logged in after registration.
+    """
     data = {
         "username": username,
         "email": email,
         "password": password
     }
-    headers = kwargs.get("headers") or {}
-    result = api_request("post", "users/", json=data, headers=headers)
+    result = api_request("post", "auth/register/", json=data)
     return result
 
 @with_auth_retry(max_retries=3)
 def update_user_account(
-    user_id: int,
     email: Optional[str] = None,
     password: Optional[str] = None,
     **kwargs
 ) -> Dict:
-    """Update user account details"""
+    """Update current user account details via /users/me/ endpoint (PATCH)"""
     data = {}
     if email is not None:
         data["email"] = email
@@ -68,7 +58,7 @@ def update_user_account(
         data["password"] = password
 
     headers = kwargs.get("headers") or token_validator.get_headers()
-    result = api_request("put", f"users/{user_id}/", json=data, headers=headers)
+    result = api_request("patch", "users/me/", json=data, headers=headers)
     return result
 
 @with_auth_retry(max_retries=3)
@@ -79,10 +69,10 @@ def logout_user(**kwargs) -> Dict:
     return result
 
 @with_auth_retry(max_retries=3)
-def delete_user_account(user_id: int, **kwargs) -> Dict:
-    """Delete user account by user ID"""
+def delete_user_account(**kwargs) -> Dict:
+    """Delete current user account via /users/me/ endpoint"""
     headers = kwargs.get("headers") or token_validator.get_headers()
-    result = api_request("delete", f"users/{user_id}/", headers=headers)
+    result = api_request("delete", "users/me/", headers=headers)
     return result
 
 @with_auth_retry(max_retries=3)
@@ -92,31 +82,6 @@ def validate_user_token(token: str) -> Dict:
     result = api_request("post", "auth/validate/token/", headers=headers)
     return result
 
-def validate_user_information(username: str, email: str) -> Dict:
-    """Validate user information before registration"""
-    try:
-        response = requests.post(
-            f"{API_BASE_URL.rstrip('/')}/token/verify/", 
-            data={"token": token}
-            )
-        result = handle_api_response(response)
-        if "error" in result:
-            return result
-        return result.get("data")
-    except Exception as e:
-        return format_error_response(e)
-    
-@with_auth_retry(max_retries=3)
-def refresh_user_token(old_token: str) -> Dict:
-    """Refresh JWT token using the API and return new token or error dict"""
-    try:
-        response = requests.post(
-            f"{API_BASE_URL.rstrip('/')}/token/refresh/", 
-            data={"refresh": old_token}
-            )
-        return handle_api_response(response)
-    except Exception as e:
-        return format_error_response(e)
 
 # ============================================================================
 # UI HANDLER WRAPPERS (for Gradio interface)
@@ -154,39 +119,30 @@ def ui_handle_register(username: str, email: str, password: str, password_confir
     return auth_state, "✅ Registration successful! Please login."
 
 def ui_load_account_details(auth_state: Dict) -> dict:
-    """UI handler to load user account details - extracts user_id from auth_state"""
+    """UI handler to load user account details"""
     from core.utils.utility_files import is_authenticated, get_auth_headers
-    
+
     if not is_authenticated(auth_state):
         return {"error": "Not authenticated"}
-    
-    user_data = auth_state.get("user")
-    if not user_data or not user_data.get("id"):
-        return {"error": "User ID not found in session"}
-    
+
     headers = get_auth_headers(auth_state)
-    result = get_user_account_details(user_data["id"], headers=headers)
-    
+    result = get_user_account_details(headers=headers)
+
     if isinstance(result, dict) and "error" in result:
         return {"error": result['error']}
-    
-    account_data = result if isinstance(result, dict) else result.get("data", {})
-    return account_data, "Account details loaded"
+
+    # result should be a dict with user data
+    return result if isinstance(result, dict) else {}
 
 def ui_handle_account_update(email: str, password: str, auth_state: Dict) -> str:
-    """UI handler to update user account - extracts user_id from auth_state"""
+    """UI handler to update user account"""
     from core.utils.utility_files import is_authenticated, get_auth_headers
-    
+
     if not is_authenticated(auth_state):
         return "❌ Not authenticated"
-    
-    user_data = auth_state.get("user")
-    if not user_data or not user_data.get("id"):
-        return "❌ User ID not found in session"
-    
+
     headers = get_auth_headers(auth_state)
     result = update_user_account(
-        user_data["id"],
         email=email if email else None,
         password=password if password else None,
         headers=headers
@@ -217,23 +173,19 @@ def ui_handle_logout(auth_state: Dict) -> tuple:
 def ui_handle_delete_account(confirmed: bool, auth_state: Dict) -> tuple:
     """UI handler to delete user account - requires confirmation checkbox"""
     from core.utils.utility_files import is_authenticated, get_auth_headers, init_auth_state
-    
+
     if not is_authenticated(auth_state):
         return auth_state, "❌ Not authenticated"
-    
+
     if not confirmed:
         return auth_state, "⚠️ Please confirm deletion"
-    
-    user_data = auth_state.get("user")
-    if not user_data or not user_data.get("id"):
-        return auth_state, "❌ User ID not found in session"
-    
+
     headers = get_auth_headers(auth_state)
-    result = delete_user_account(user_data["id"], headers=headers)
-    
+    result = delete_user_account(headers=headers)
+
     if isinstance(result, dict) and "error" in result:
         return auth_state, f"❌ Error: {result['error']}"
-    
+
     # Clear auth state after deletion
     cleared_state = init_auth_state()
     return cleared_state, "✅ Account deleted successfully"
