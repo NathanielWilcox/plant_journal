@@ -35,15 +35,27 @@ jobs:
           pip install --no-cache-dir -r requirements.txt
 
       - name: Run Django checks
+        env:
+          API_TOKEN: dummy-token-for-ci
+          SECRET_KEY: dummy-secret-key-for-ci
         run: python manage.py check
 
       - name: Run migrations
+        env:
+          API_TOKEN: dummy-token-for-ci
+          SECRET_KEY: dummy-secret-key-for-ci
         run: python manage.py migrate
 
       - name: Run tests
+        env:
+          API_TOKEN: dummy-token-for-ci
+          SECRET_KEY: dummy-secret-key-for-ci
         run: pytest -v --tb=short
 
       - name: Generate coverage report
+        env:
+          API_TOKEN: dummy-token-for-ci
+          SECRET_KEY: dummy-secret-key-for-ci
         run: pytest --cov=plants --cov=logs --cov=users --cov-report=xml
 
       - name: Upload coverage to Codecov
