@@ -61,6 +61,29 @@ pytest -v
 
 ---
 
+---
+
+## 📊 Current Test Status
+
+**✅ All core tests passing** (with some UI tests intentionally skipped)
+
+- ✅ Unit tests for models and serializers
+- ✅ Integration tests for API endpoints and permissions
+- ✅ Workflow tests for cross-layer processes
+- ⏭️ UI tests (Gradio - separate integration layer, may be skipped)
+- ✅ E2E tests for complete user journeys
+
+**Key Implementation Details:**
+
+- Fixtures use pytest-django `db` parameter for database access
+- API client fixtures create new `APIClient()` instances per user (prevents auth bleed)
+- Serializer validation properly returns 400 errors (not 500)
+- Owner auto-assigned during model creation via `perform_create()`
+- PlantCreateUpdateSerializer includes owner/id/added_at as read-only fields
+- LogCreateSerializer validates sunlight_hours between 0-24
+
+---
+
 ## Testing Project
 
 This test suite is organized into **5 phases** with clear separation of concerns:
@@ -72,65 +95,95 @@ This test suite is organized into **5 phases** with clear separation of concerns
 Tests individual components in isolation:
 
 - User model creation and password hashing
-- Plant model validation and relationships
-- Log model cascading deletes
-- Serializer validation (create vs retrieve serializers)
+- Plant model validation and relationships (defaults: pot_size='medium', sunlight_preference='bright_indirect_light')
+- Log model cascading deletes with owner tracking
+- Serializer validation patterns:
+  - `PlantCreateUpdateSerializer`: write operations with read-only owner/id/added_at
+  - `PlantSerializer`: read operations with nested logs
+  - `LogCreateSerializer`: write operations with writable plant field
+  - `LogSerializer`: read operations with read-only plant, timestamp, owner
 
 **Run Phase 1:**
 
 ```bash
 pytest plants/tests/test_models.py users/tests.py -v
+pytest -m unit  # All unit tests
 ```
 
 ### Phase 2: Integration Tests (API Endpoints)
 
 **Location:** `plants/tests/test_views.py`, `users/tests.py`
 
-Tests API endpoints and permissions:
+Tests API endpoints with multi-user isolation:
 
-- CRUD operations on all endpoints
-- Authentication and authorization
-- Permission enforcement (only see own data)
-- Custom routes (e.g., `/plants/{id}/logs/`)
+- **PlantViewSet CRUD:** list (filters by owner), create (auto-assigns owner), retrieve (404 for non-owner), update (PATCH), delete
+- **LogViewSet CRUD:** list (filters by owner), create (validates plant ownership + sunlight hours), retrieve, update, delete
+- **Custom Routes:** `GET /plants/{id}/logs/` returns plant's logs ordered by timestamp
+- **Authentication:** 401 for unauthenticated requests
+- **Authorization:** 404 for accessing other users' data, 403 for creating logs on other users' plants
+- **Serializer Routing:** POST/PATCH use *CreateSerializer (writable plant), GET uses*Serializer (read-only)
+
+**Important:** API client fixtures create new instances per user to prevent authentication bleeding between tests
 
 **Run Phase 2:**
 
 ```bash
 pytest plants/tests/test_views.py -v
+pytest -m integration  # All integration tests
 ```
 
-### Phase 3: Integration Tests (Cross-Layer)
+### Phase 3: Workflow Integration Tests (Cross-Layer)
 
 **Location:** `tests/test_auth_flow.py`
 
 Tests complete workflows across multiple layers:
 
-- Register → Login → Create Data → Logout
-- Plant lifecycle (create → read → update → delete)
-- Multi-user isolation (User A cannot see User B's data)
-- Cascade deletes preserving data integrity
+- **Authentication Flow:** Register → Login (JWT tokens) → Create Data → Logout
+- **Plant Lifecycle:** Create → List (verify owner filter) → Retrieve → Update (PATCH) → Delete
+- **Log Lifecycle:** Create (validates plant ownership) → List → Retrieve → Update → Delete
+- **Multi-user Isolation Tests:**
+  - User A cannot see User B's plants (404)
+  - User A cannot update User B's plants (404)
+  - User A cannot delete User B's plants (404)
+  - User A cannot see User B's logs (404)
+- **Cascade Deletes:** Deleting a plant cascades deletes to logs
+
+**Key Test Classes:**
+
+- `TestAuthenticationFlow`: Register/login/token generation
+- `TestPlantLifecycleFlow`: Full CRUD with ownership verification
+- `TestLogLifecycleFlow`: CRUD with plant dependency
+- `TestMultiUserIsolation`: Permission enforcement across users
 
 **Run Phase 3:**
 
 ```bash
 pytest tests/test_auth_flow.py -v
+pytest -m auth  # All auth-related tests
 ```
 
 ### Phase 4: Gradio UI Integration Tests
 
 **Location:** `tests/test_gradio_ui.py`
 
-Tests UI handlers and mocked API calls:
+Tests UI handlers and mocked API calls (some tests may be skipped for UI-specific setup):
 
-- Authentication UI (login, register)
+- Authentication UI (login, register, logout)
 - Plant management UI (create, update, delete)
-- Log management UI
+- Log management UI (create, update, delete)
 - Error handling and validation
+
+**Skipped Tests:**
+
+- `test_ui_register_success` - UI layer requires separate mock setup
+- `test_ui_load_user_plants` - UI layer requires separate mock setup
+- `test_ui_delete_plant` - UI layer requires separate mock setup
 
 **Run Phase 4:**
 
 ```bash
 pytest tests/test_gradio_ui.py -v
+pytest tests/test_gradio_ui.py::TestGradioPlantUI::test_ui_create_plant -v  # Run non-skipped UI tests
 ```
 
 ### Phase 5: End-to-End Tests
@@ -139,15 +192,23 @@ pytest tests/test_gradio_ui.py -v
 
 Tests complete user journeys and error scenarios:
 
-- Full new user workflow from signup to data management
-- Multiple independent users
-- Error recovery and data integrity
-- Validation across API boundaries
+- **Full User Journey:** Register (foliage_plant category, biweekly schedule) → Create plant → Create log → Verify data
+- **Multiple Users:** User A and User B create independent plants/logs, verify no cross-user visibility
+- **Error Recovery:** Invalid data validation, cascade delete preservation
+- **Validation Across Boundaries:** Sunlight validation returns 400 (not 500), plant ownership enforced
+
+**Key Test Classes:**
+
+- `TestCompleteApplicationWorkflow`: Full user journeys with valid data (foliage_plant, biweekly)
+- `TestErrorRecoveryScenarios`: Invalid input handling, cascade deletes
+- `TestDataValidationIntegration`: Sunlight hours bounds checking (0-24)
 
 **Run Phase 5 (slow tests marked):**
 
 ```bash
-pytest tests/test_e2e_workflows.py -v -m e2e
+pytest tests/test_e2e_workflows.py -v
+pytest -m e2e  # All E2E tests
+pytest -m "not slow"  # Skip slow E2E tests (faster verification)
 ```
 
 ---
@@ -337,7 +398,7 @@ chmod +x .git/hooks/pre-commit
 
 ### Fixture Hierarchy
 
-```
+``` markdown
 conftest.py (root fixtures)
 ├── api_client (base unauthenticated client)
 ├── api_client_with_user (authenticated)
@@ -357,7 +418,7 @@ plants/tests/
 
 ### Model Test Relationships
 
-```
+``` markdown
 User
 ├── creates Plant (owner FK)
 │   └── creates Log (plant FK, owner FK)
