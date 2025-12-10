@@ -1,0 +1,59 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    outputs:
+      docker-image: ${{ steps.image.outputs.name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest -v --tb=short -m "not slow"
+
+      - name: Generate coverage
+        run: pytest --cov=plants --cov=logs --cov=users --cov-report=term-missing
+
+  # UNCOMMENT WHEN READY TO DEPLOY
+  # deploy:
+  #   needs: build-and-test
+  #   runs-on: ubuntu-latest
+  #   if: success()
+  #
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - name: Deploy to Heroku
+  #       env:
+  #         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+  #         HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+  #       run: |
+  #         git remote add heroku https://git.heroku.com/$HEROKU_APP_NAME.git
+  #         git push heroku main
+  #
+  #     - name: Notify deployment success
+  #       uses: actions/github-script@v6
+  #       with:
+  #         script: |
+  #           github.rest.issues.createComment({
+  #             issue_number: context.issue.number,
+  #             owner: context.repo.owner,
+  #             repo: context.repo.repo,
+  #             body: '✅ Deployment to production successful!'
+  #           })

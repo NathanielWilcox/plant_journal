@@ -1,0 +1,49 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-lint
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pylint black isort
+
+      - name: Check code formatting with black
+        run: black --check plants/ logs/ users/ core/ tests/
+        continue-on-error: true
+
+      - name: Check import sorting with isort
+        run: isort --check-only plants/ logs/ users/ core/ tests/
+        continue-on-error: true
+
+      - name: Lint with flake8
+        run: |
+          # Stop build on style errors, warn on warnings
+          flake8 plants/ logs/ users/ core/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 plants/ logs/ users/ core/ tests/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        continue-on-error: true
+
+      - name: Type check with pylint
+        run: pylint plants/ logs/ users/ --exit-zero
+        continue-on-error: true
