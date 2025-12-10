@@ -12,3 +12,6 @@ def update_user(user, **kwargs):
 
 def delete_user(user):
     user.delete()
+
+def list_users(**kwargs):
+    return get_user_model().objects.filter(**kwargs)

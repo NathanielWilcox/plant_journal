@@ -91,3 +91,89 @@ def handle_update(pid, category, care_level, location, pot_size):
         pot_size=pot_size
     )
 
+# ============================================================================
+# UI HANDLER WRAPPERS (for Gradio interface)
+# ============================================================================
+
+def ui_load_user_plants(auth_state: Dict) -> tuple:
+    """UI handler to load all user plants"""
+    from core.utils.utility_files import is_authenticated, get_auth_headers
+    
+    if not is_authenticated(auth_state):
+        return [], "Error: Not authenticated"
+    
+    headers = get_auth_headers(auth_state)
+    result = api_request("GET", "/plants/", headers=headers)
+    
+    if isinstance(result, dict) and "error" in result:
+        return [], f"Error: {result['error']}"
+    
+    plants_list = result if isinstance(result, list) else result.get("data", [])
+    return plants_list, "Plants loaded successfully"
+
+def ui_handle_create_plant(name: str, category: str, care_level: str, location: str, pot_size: str, auth_state: Dict) -> str:
+    """UI handler to create a new plant"""
+    from core.utils.utility_files import is_authenticated, get_auth_headers
+    
+    if not is_authenticated(auth_state):
+        return "Error: Not authenticated"
+    
+    headers = get_auth_headers(auth_state)
+    result = api_request(
+        "POST",
+        "/plants/",
+        headers=headers,
+        json={
+            "name": name,
+            "category": category,
+            "care_level": care_level,
+            "location": location,
+            "pot_size": pot_size
+        }
+    )
+    
+    if isinstance(result, dict) and "error" in result:
+        return f"Error: {result['error']}"
+    
+    return f"Plant '{name}' created successfully"
+
+def ui_handle_update_plant(plant_id: int, category: str, care_level: str, location: str, pot_size: str, auth_state: Dict) -> str:
+    """UI handler to update plant details"""
+    from core.utils.utility_files import is_authenticated, get_auth_headers
+    
+    if not is_authenticated(auth_state):
+        return "Error: Not authenticated"
+    
+    headers = get_auth_headers(auth_state)
+    result = api_request(
+        "PUT",
+        f"/plants/{plant_id}/",
+        headers=headers,
+        json={
+            "category": category,
+            "care_level": care_level,
+            "location": location,
+            "pot_size": pot_size
+        }
+    )
+    
+    if isinstance(result, dict) and "error" in result:
+        return f"Error: {result['error']}"
+    
+    return "Plant updated successfully"
+
+def ui_handle_delete_plant(plant_id: int, auth_state: Dict) -> str:
+    """UI handler to delete a plant"""
+    from core.utils.utility_files import is_authenticated, get_auth_headers
+    
+    if not is_authenticated(auth_state):
+        return "Error: Not authenticated"
+    
+    headers = get_auth_headers(auth_state)
+    result = api_request("DELETE", f"/plants/{plant_id}/", headers=headers)
+    
+    if isinstance(result, dict) and "error" in result:
+        return f"Error: {result['error']}"
+    
+    return "Plant deleted successfully"
+

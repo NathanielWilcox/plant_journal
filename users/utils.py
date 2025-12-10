@@ -43,13 +43,13 @@ def register_user(
     password: str,
     **kwargs
 ) -> Dict:
-    """Register a new user"""
+    """Register a new user - NO authentication required"""
     data = {
         "username": username,
         "email": email,
         "password": password
     }
-    headers = kwargs.get("headers") or token_validator.get_headers()
+    headers = kwargs.get("headers") or {}
     result = api_request("post", "users/", json=data, headers=headers)
     return result
 
@@ -117,3 +117,123 @@ def refresh_user_token(old_token: str) -> Dict:
         return handle_api_response(response)
     except Exception as e:
         return format_error_response(e)
+
+# ============================================================================
+# UI HANDLER WRAPPERS (for Gradio interface)
+# ============================================================================
+
+def ui_handle_login(username: str, password: str, auth_state: Dict) -> tuple:
+    """UI handler for user login - updates auth_state with token and returns updated state + message"""
+    result = login_user(username, password)
+    
+    if isinstance(result, dict) and "error" in result:
+        return auth_state, f"❌ Error: {result['error']}"
+    
+    token = result.get("token") if isinstance(result, dict) else result
+    user_data = result.get("user") if isinstance(result, dict) else None
+    
+    # Update auth_state with token and user info
+    auth_state["token"] = token
+    auth_state["user"] = user_data
+    
+    return auth_state, "✅ Login successful!"
+
+def ui_handle_register(username: str, email: str, password: str, password_confirm: str, auth_state: Dict) -> tuple:
+    """UI handler for user registration"""
+    if password != password_confirm:
+        return auth_state, "❌ Passwords do not match"
+    
+    if not username or not email or not password:
+        return auth_state, "❌ All fields are required"
+    
+    result = register_user(username, email, password)
+    
+    if isinstance(result, dict) and "error" in result:
+        return auth_state, f"❌ Error: {result['error']}"
+    
+    return auth_state, "✅ Registration successful! Please login."
+
+def ui_load_account_details(auth_state: Dict) -> dict:
+    """UI handler to load user account details - extracts user_id from auth_state"""
+    from core.utils.utility_files import is_authenticated, get_auth_headers
+    
+    if not is_authenticated(auth_state):
+        return {"error": "Not authenticated"}
+    
+    user_data = auth_state.get("user")
+    if not user_data or not user_data.get("id"):
+        return {"error": "User ID not found in session"}
+    
+    headers = get_auth_headers(auth_state)
+    result = get_user_account_details(user_data["id"], headers=headers)
+    
+    if isinstance(result, dict) and "error" in result:
+        return {"error": result['error']}
+    
+    account_data = result if isinstance(result, dict) else result.get("data", {})
+    return account_data, "Account details loaded"
+
+def ui_handle_account_update(email: str, password: str, auth_state: Dict) -> str:
+    """UI handler to update user account - extracts user_id from auth_state"""
+    from core.utils.utility_files import is_authenticated, get_auth_headers
+    
+    if not is_authenticated(auth_state):
+        return "❌ Not authenticated"
+    
+    user_data = auth_state.get("user")
+    if not user_data or not user_data.get("id"):
+        return "❌ User ID not found in session"
+    
+    headers = get_auth_headers(auth_state)
+    result = update_user_account(
+        user_data["id"],
+        email=email if email else None,
+        password=password if password else None,
+        headers=headers
+    )
+    
+    if isinstance(result, dict) and "error" in result:
+        return f"❌ Error: {result['error']}"
+    
+    return "Account updated successfully"
+
+def ui_handle_logout(auth_state: Dict) -> tuple:
+    """UI handler for user logout - clears auth_state and returns cleared state + message"""
+    from core.utils.utility_files import is_authenticated, get_auth_headers, init_auth_state
+    
+    if not is_authenticated(auth_state):
+        return auth_state, "⚠️ Not logged in"
+    
+    headers = get_auth_headers(auth_state)
+    result = logout_user(headers=headers)
+    
+    if isinstance(result, dict) and "error" in result:
+        return auth_state, f"❌ Error: {result['error']}"
+    
+    # Clear auth state
+    cleared_state = init_auth_state()
+    return cleared_state, "✅ Logged out successfully"
+
+def ui_handle_delete_account(confirmed: bool, auth_state: Dict) -> tuple:
+    """UI handler to delete user account - requires confirmation checkbox"""
+    from core.utils.utility_files import is_authenticated, get_auth_headers, init_auth_state
+    
+    if not is_authenticated(auth_state):
+        return auth_state, "❌ Not authenticated"
+    
+    if not confirmed:
+        return auth_state, "⚠️ Please confirm deletion"
+    
+    user_data = auth_state.get("user")
+    if not user_data or not user_data.get("id"):
+        return auth_state, "❌ User ID not found in session"
+    
+    headers = get_auth_headers(auth_state)
+    result = delete_user_account(user_data["id"], headers=headers)
+    
+    if isinstance(result, dict) and "error" in result:
+        return auth_state, f"❌ Error: {result['error']}"
+    
+    # Clear auth state after deletion
+    cleared_state = init_auth_state()
+    return cleared_state, "✅ Account deleted successfully"

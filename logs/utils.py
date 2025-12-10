@@ -3,6 +3,7 @@ from core.auth.decorators import with_auth_retry
 from core.auth.token_validator import token_validator
 from core.utils.utility_files import api_request
 from plants.models import Log
+from .crud import create_log, update_log, list_logs_for_plant
 
 # --- Helper: retrieve available log types ---
 @with_auth_retry(max_retries=3)
@@ -56,7 +57,6 @@ def search_plant_issues(query, **kwargs):
                 "date": log.get("timestamp")
             })
     return issues_list
-
 # --- Check plant exists function ---
 @with_auth_retry(max_retries=3)
 def check_plant_exists(plant_id, **kwargs):
@@ -87,3 +87,76 @@ def check_plant_exists(plant_id, **kwargs):
         return {"exists": False, "error": f"Lookup failed: {result.get('error')}"}
 
     return {"exists": True, "plant": result.get("data", result)}
+
+# ============================================================================
+# UI HANDLER FUNCTIONS FOR GRADIO
+# ============================================================================
+
+def ui_check_plant(plant_id: float, auth_state: dict) -> dict:
+    """UI handler to check if plant exists - returns plant info or error dict"""
+    from core.utils.utility_files import get_auth_headers
+    
+    if not plant_id or plant_id <= 0:
+        return {"error": "Invalid plant ID"}
+    
+    headers = get_auth_headers(auth_state)
+    result = check_plant_exists(plant_id=int(plant_id), headers=headers)
+    return result
+
+def ui_handle_create_log(plant_id: float, log_type: str, sunlight_hours: float, auth_state: dict) -> str:
+    """UI handler for creating a log - returns status_message"""
+    from core.utils.utility_files import is_authenticated, get_auth_headers
+    
+    if not is_authenticated(auth_state):
+        return "❌ Not authenticated"
+    
+    if not plant_id or plant_id <= 0:
+        return "⚠️ Valid plant ID is required"
+    
+    headers = get_auth_headers(auth_state)
+    result = create_log(
+        plant_id=int(plant_id),
+        log_type=log_type,
+        sunlight_hours=sunlight_hours if sunlight_hours else None,
+        headers=headers
+    )
+    
+    if isinstance(result, dict) and "error" in result:
+        return f"❌ Failed to create log: {result['error']}"
+    return "✅ Log created successfully!"
+
+def ui_handle_update_log(log_id: float, log_type: str, sunlight_hours: float, auth_state: dict) -> str:
+    """UI handler for updating a log - returns status_message"""
+    from core.utils.utility_files import is_authenticated, get_auth_headers
+    
+    if not is_authenticated(auth_state):
+        return "❌ Not authenticated"
+    
+    if not log_id or log_id <= 0:
+        return "⚠️ Valid log ID is required"
+    
+    headers = get_auth_headers(auth_state)
+    result = update_log(
+        log_id=int(log_id),
+        log_type=log_type,
+        sunlight_hours=sunlight_hours if sunlight_hours else None,
+        headers=headers
+    )
+    
+    if isinstance(result, dict) and "error" in result:
+        return f"❌ Failed to update log: {result['error']}"
+    return "✅ Log updated successfully!"
+
+def ui_load_plant_logs(plant_id: float, auth_state: dict) -> dict:
+    """UI handler to load logs for a plant - returns logs dict or error"""
+    from core.utils.utility_files import is_authenticated, get_auth_headers
+    
+    if not plant_id or plant_id <= 0:
+        return {"error": "Invalid plant ID"}
+    
+    if not is_authenticated(auth_state):
+        return {"error": "Not authenticated"}
+    
+    headers = get_auth_headers(auth_state)
+    result = list_logs_for_plant(plant_id=int(plant_id), headers=headers)
+    return result

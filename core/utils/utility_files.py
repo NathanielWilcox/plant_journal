@@ -68,3 +68,22 @@ def refresh_jwt_token(old_token: str) -> Dict:
         return result.get("data")
     except Exception as e:
         return format_error_response(e)
+
+# ============================================================================
+# UI STATE MANAGEMENT HELPERS
+# ============================================================================
+
+def init_auth_state():
+    """Initialize authentication state"""
+    return {"token": None, "user": None}
+
+def is_authenticated(auth_state):
+    """Check if user is authenticated"""
+    return auth_state.get("token") is not None
+
+def get_auth_headers(auth_state):
+    """Get authorization headers from token"""
+    token = auth_state.get("token")
+    if token:
+        return {"Authorization": f"Bearer {token}"}
+    return {}

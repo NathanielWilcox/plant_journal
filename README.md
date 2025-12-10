@@ -10,48 +10,105 @@ This is meant to be an instruction guide to explain the order of processes for P
 
 ## Setup Instructions
 
+### Prerequisites
+
+- Python 3.8+ installed
+- pip package manager
+
 ### Backend Setup (Python & Django)
 
-Clone the repository:
+#### 1. Clone the repository
 
-``` git
-git clone [<repository-url>](https://github.com/NathanielWilcox/plant_journal)
+```bash
+git clone https://github.com/NathanielWilcox/plant_journal
 cd plant_journal
 ```
 
-Create a virtual environment:
+#### 2. Create and activate a virtual environment
 
-`python -m venv venv`
+**macOS/Linux:**
 
-Now activate that environment:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
 
-### Windows
+**Windows:**
 
-`.\venv\Scripts\activate`
+```bash
+python -m venv venv
+.\venv\Scripts\activate
+```
 
-### macOS/Linux
+#### 3. Install Python dependencies
 
-`source venv/bin/activate`
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
 
-## Let's Get Started
+#### 4. Environment configuration
 
-Install Python dependencies:
+Create a `.env` file in the project root with the following variables:
 
-`pip install -r requirements.txt`
+``` markdown
+SECRET_KEY=your-secret-key-here
+JWT_SECRET_KEY=your-jwt-secret-key-here
+API_BASE_URL=http://localhost:8000/api
+DEBUG=True
+```
 
-Make migrations and migrate the database:
+**Generating secure secret keys:**
 
-`python manage.py makemigrations`
+For `SECRET_KEY` (Django), run this Python command:
+```bash
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
 
-`python manage.py migrate`
+For `JWT_SECRET_KEY`, run this Python command:
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
 
-Run the backend server:
+Or, generate both at once with this script:
+```bash
+python << 'EOF'
+from django.core.management.utils import get_random_secret_key
+import secrets
 
-`python manage.py runserver`
+print("SECRET_KEY=" + get_random_secret_key())
+print("JWT_SECRET_KEY=" + secrets.token_urlsafe(32))
+EOF
+```
 
-Open Gradio UI
+Copy the output into your `.env` file. For development, `DEBUG=True` is fine, but always set it to `False` in production.
 
-`python gradio_ui.py`
+#### 5. Initialize the database
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+#### 6. Run the development server
+
+In one terminal window, start the Django backend:
+
+```bash
+python manage.py runserver
+```
+
+The API will be available at `http://localhost:8000`
+
+#### 7. Run the Gradio UI
+
+In a separate terminal window (with venv activated), start Gradio:
+
+```bash
+python gradio_ui.py
+```
+
+The UI will be accessible in your browser at the URL displayed in the terminal output.
 
 Project Structure
 
