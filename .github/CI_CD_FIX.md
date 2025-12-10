@@ -3,8 +3,10 @@
 ## Issues Fixed
 
 ### Issue 1: Missing `python-dotenv`
+
 **Error:**
-```
+
+``` markdown
 ModuleNotFoundError: No module named 'dotenv'
 ```
 
@@ -13,14 +15,17 @@ ModuleNotFoundError: No module named 'dotenv'
 **Solution:** Added `python-dotenv==1.0.1` to requirements.txt
 
 ### Issue 2: Python Version Incompatibility
+
 **Error:**
-```
+
+``` markdown
 ERROR: Could not find a version that satisfies the requirement audioop-lts==0.2.2
 ```
 
 **Root Cause:** `audioop-lts` requires Python 3.13, but CI/CD was testing against Python 3.10-3.13
 
-**Solution:** 
+**Solution:**
+
 - Removed `audioop-lts==0.2.2` (not needed for Plant Journal)
 - Updated test matrix to Python 3.12 and 3.13 (supported range)
 

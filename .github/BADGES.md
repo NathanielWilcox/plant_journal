@@ -37,6 +37,7 @@ Your project description here...
 - **Gray** = No runs yet (newly added)
 
 When users see green badges, they know:
+
 - ✅ Tests are passing
 - ✅ Code quality is good
 - ✅ No known vulnerabilities

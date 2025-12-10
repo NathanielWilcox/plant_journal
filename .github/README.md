@@ -12,6 +12,7 @@ You now have 4 automated workflows that run every time you push code:
 ## One-Minute Setup
 
 1. **Push to GitHub**
+
    ```bash
    git add .github/
    git commit -m "Add CI/CD pipeline"
@@ -26,7 +27,7 @@ You now have 4 automated workflows that run every time you push code:
 
 ## What happens on each push
 
-```
+``` markdown
 You push code → GitHub detects push
     ↓
 Runs test.yml (tests all Python versions)
@@ -45,6 +46,7 @@ Shows results in PR/commit
 - **Yellow ⏳** = Still running
 
 Click on a workflow to see:
+
 - Which steps passed/failed
 - Detailed logs
 - Coverage reports
@@ -64,7 +66,7 @@ When you're ready to deploy:
 
 ## Files Created
 
-```
+``` markdown
 .github/
 ├── workflows/
 │   ├── test.yml          # Run tests (main pipeline)

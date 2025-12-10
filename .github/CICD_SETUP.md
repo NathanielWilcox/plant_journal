@@ -18,6 +18,7 @@ The pipeline consists of 4 automated workflows:
 **Triggers:** Push to main/develop, Pull Requests
 
 **What it does:**
+
 - Tests against Python 3.10, 3.11, 3.12, 3.13 (matrix testing)
 - Caches pip dependencies for speed
 - Runs Django system checks
@@ -26,6 +27,7 @@ The pipeline consists of 4 automated workflows:
 - Uploads coverage to Codecov
 
 **Key Features:**
+
 - Matrix strategy tests multiple Python versions
 - Pip caching for 5-10x faster builds
 - Coverage reports automatically generated
@@ -38,12 +40,14 @@ The pipeline consists of 4 automated workflows:
 **Triggers:** Push to main/develop, Pull Requests
 
 **What it does:**
+
 - Checks code formatting with Black
 - Verifies import sorting with isort
 - Lints with flake8 (catches errors and warnings)
 - Type checking with pylint
 
 **Key Features:**
+
 - Non-blocking checks (continue-on-error: true)
 - Helps maintain consistent code style
 - Prevents common Python mistakes
@@ -53,17 +57,20 @@ The pipeline consists of 4 automated workflows:
 
 ### 3. Security (`security.yml`)
 
-**Triggers:** 
+**Triggers:**
+
 - Push to main/develop
 - Pull Requests
 - Daily schedule (2 AM UTC)
 
 **What it does:**
+
 - Security scanning with Bandit (finds common vulnerabilities)
 - Checks for known package vulnerabilities with Safety
 - Scans for secrets/credentials in code with TruffleHog
 
 **Key Features:**
+
 - Runs on schedule to catch new vulnerabilities
 - Can detect accidentally committed secrets
 - Protects against common security issues
@@ -76,6 +83,7 @@ The pipeline consists of 4 automated workflows:
 **Triggers:** Push to main only (manual trigger available)
 
 **What it does:**
+
 - Builds and tests application
 - Deploys to production (when uncommented)
 - Posts deployment status to pull requests
@@ -83,6 +91,7 @@ The pipeline consists of 4 automated workflows:
 **Currently:** Build and test only (deployment commented out)
 
 **To Enable Deployment:**
+
 1. Set up Heroku/Railway/Render account
 2. Add `HEROKU_API_KEY` and `HEROKU_APP_NAME` to GitHub Secrets
 3. Uncomment deployment steps in `deploy.yml`
@@ -110,7 +119,7 @@ You should see workflows running automatically.
 
 ### 4. Setup Code Coverage Tracking (Optional)
 
-1. Go to https://codecov.io
+1. Go to <https://codecov.io>
 2. Sign in with GitHub
 3. Authorize codecov
 4. Repository will be automatically tracked
@@ -120,7 +129,8 @@ You should see workflows running automatically.
 
 To enable automatic deployment:
 
-#### For Heroku:
+#### For Heroku
+
 ```bash
 # Get your API key from Heroku settings
 # Add to GitHub Secrets:
@@ -128,13 +138,15 @@ To enable automatic deployment:
 # - HEROKU_APP_NAME: <your-app-name>
 ```
 
-#### For Railway:
+#### For Railway
+
 ```bash
 # Similar setup but different secrets
 # RAILWAY_TOKEN
 ```
 
-#### For Render:
+#### For Render
+
 ```bash
 # Create deploy hook in Render dashboard
 # Add RENDER_DEPLOY_HOOK_URL to GitHub Secrets
@@ -144,7 +156,7 @@ To enable automatic deployment:
 
 Secrets needed for deployments (add via `Settings → Secrets and variables → Actions`):
 
-```
+``` markdown
 HEROKU_API_KEY=<your-heroku-api-key>
 HEROKU_APP_NAME=<your-app-name>
 ```
@@ -161,6 +173,7 @@ To enforce CI/CD checks:
 5. Dismiss stale reviews when new commits pushed
 
 This ensures:
+
 - ✅ All tests pass before merging
 - ✅ No accidental force pushes
 - ✅ Code review required (if set up)
@@ -168,11 +181,13 @@ This ensures:
 ## Monitoring & Alerts
 
 ### Check Status
+
 - Dashboard: `Actions` tab shows all runs
 - Badges: Can be added to README
 - Email: GitHub emails on failures (configurable)
 
 ### Failure Notifications
+
 - GitHub shows red ✗ on failed checks
 - PR shows which checks failed
 - Email notifications (by default)
@@ -181,16 +196,19 @@ This ensures:
 ## Common Issues & Fixes
 
 ### Tests failing locally but passing in CI
+
 - Different Python version: Run locally with same version
 - Missing dependencies: Check requirements.txt is up to date
 - Database: CI creates fresh SQLite, yours might have old state
 
 ### CI taking too long
+
 - Cache is helping: First run is slowest
 - Can parallelize more: Add more matrix combinations
 - Reduce test scope: Use `-m "not slow"` marker
 
 ### Secrets not working in deploy
+
 - Double-check secret names match exactly
 - Verify secret value is correct
 - Redeploy workflow after adding secret
