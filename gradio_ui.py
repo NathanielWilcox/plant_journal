@@ -47,6 +47,19 @@ from logs.utils import (
 )
 
 # ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
+def login_and_load_account(username: str, password: str, auth_state: dict) -> tuple:
+    """Login and automatically load account details"""
+    auth_state, status = ui_handle_login(username, password, auth_state)
+    if is_authenticated(auth_state):
+        details = ui_load_account_details(auth_state)
+        status = "✅ " + status + " Account details loaded!"
+        return auth_state, status, details
+    return auth_state, status, {}
+
+# ============================================================================
 # UI LAYOUT
 # ============================================================================
 
@@ -84,7 +97,7 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
                         )
                 
                 login_btn.click(
-                    fn=ui_handle_login,
+                    fn=login_and_load_account,
                     inputs=[login_username, login_password, auth_state],
                     outputs=[auth_state, login_status]
                 ).then(
@@ -398,6 +411,15 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
                 inputs=[plant_id_for_logs, auth_state],
                 outputs=[logs_display]
             )
+
+    # ========================================================================
+    # ADDITIONAL EVENT: Auto-load account details on successful login
+    # ========================================================================
+    login_btn.click(
+        fn=login_and_load_account,
+        inputs=[login_username, login_password, auth_state],
+        outputs=[auth_state, login_status, account_details]
+    )
 
 
 if __name__ == "__main__":
