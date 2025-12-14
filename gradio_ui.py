@@ -74,9 +74,6 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
     # STATE INITIALIZATION
     auth_state = gr.State(value=init_auth_state())
     
-    # Pre-define account_details for login handler
-    account_details = gr.JSON(label="Your Account", visible=False)
-    
     # ========================================================================
     # AUTHENTICATION SECTION (visible when NOT logged in)
     # ========================================================================
@@ -97,7 +94,7 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
                             placeholder="Enter your password",
                             type="password"
                         )
-                        login_btn = gr.Button("🔓 Login", size="lg")
+                        login_btn = gr.Button("� Login", size="lg")
                         login_status = gr.Textbox(
                             label="Result",
                             interactive=False,
@@ -107,7 +104,7 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
                 login_btn.click(
                     fn=login_and_load_account,
                     inputs=[login_username, login_password, auth_state],
-                    outputs=[auth_state, login_status, account_details]
+                    outputs=[auth_state, login_status]
                 ).then(
                     fn=lambda: ("", ""),
                     outputs=[login_username, login_password]
@@ -136,7 +133,7 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
                             placeholder="Confirm your password",
                             type="password"
                         )
-                        reg_btn = gr.Button("📝 Register", size="lg")
+                        reg_btn = gr.Button("🌱 Register", size="lg")
                         reg_status = gr.Textbox(
                             label="Result",
                             interactive=False,
@@ -160,14 +157,14 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
             # ========================================================================
             # TAB 1: ACCOUNT MANAGEMENT
             # ========================================================================
-            with gr.Tab("👤 Account"):
+            with gr.Tab("⚙️ Account"):
                 gr.Markdown("### Manage Your Account")
                 
                 with gr.Row():
                     with gr.Column():
                         # Get account details section
                         gr.Markdown("#### Account Details")
-                        get_details_btn = gr.Button("📋 Refresh Account Details")
+                        get_details_btn = gr.Button("� Refresh Account Details")
                         account_details = gr.JSON(label="Your Account", value={})
                         
                         get_details_btn.click(
@@ -197,7 +194,7 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
                             placeholder="Leave blank to keep current",
                             type="password"
                         )
-                        update_btn = gr.Button("✏️ Update Account")
+                        update_btn = gr.Button("💾 Update Account")
                         update_status = gr.Textbox(label="Update Result", interactive=False)
                         
                         update_btn.click(
@@ -210,7 +207,7 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
                     with gr.Column():
                         # Logout section
                         gr.Markdown("#### Logout")
-                        logout_btn = gr.Button("🚪 Logout", size="lg")
+                        logout_btn = gr.Button("� Logout", size="lg")
                         logout_status = gr.Textbox(label="Logout Result", interactive=False)
                     
                     with gr.Column():
@@ -225,159 +222,159 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
         # ========================================================================
         with gr.Tab("🌿 Plants"):
             gr.Markdown("### Manage Your Plants")
-        
-        # Refresh plants button at top
-        with gr.Row():
-            refresh_plants_btn = gr.Button("🔄 Refresh Plants List")
-            plants_status = gr.Textbox(label="Status", interactive=False, value="")
-        
-        # List plants section
-        with gr.Row():
-            with gr.Column():
-                gr.Markdown("#### Your Plants")
-                plants_list = gr.JSON(label="Plants List")
-                
-                refresh_plants_btn.click(
-                    fn=ui_load_user_plants,
-                    inputs=[auth_state],
-                    outputs=[plants_list, plants_status]
-                )
-        
-        # Create plant section
-        with gr.Row():
-            with gr.Column():
-                gr.Markdown("#### Add New Plant")
-                plant_name = gr.Textbox(
-                    label="Plant Name/Nickname",
-                    placeholder="e.g., My Aloe Vera"
-                )
-                plant_category = gr.Dropdown(
-                    choices=get_all_categories(),
-                    label="Category",
-                    value="foliage_plant"
-                )
-                plant_care_level = gr.Dropdown(
-                    choices=["Easy", "Moderate", "Difficult"],
-                    label="Care Level"
-                )
-                plant_location = gr.Textbox(
-                    label="Location (Optional)",
-                    placeholder="e.g., Living Room Window"
-                )
-                plant_pot_size = gr.Dropdown(
-                    choices=[c[0] for c in Plant.POT_SIZE_CHOICES],
-                    label="Container Size",
-                    value="medium"
-                )
-                create_plant_btn = gr.Button("➕ Create Plant")
-                create_plant_status = gr.Textbox(label="Result", interactive=False)
-                
-                create_plant_btn.click(
-                    fn=ui_handle_create_plant,
-                    inputs=[plant_name, plant_category, plant_care_level, plant_location, plant_pot_size, auth_state],
-                    outputs=[create_plant_status]
-                )
             
-            with gr.Column():
-                gr.Markdown("#### Update Plant")
-                update_plant_id = gr.Number(
-                    label="Plant ID",
-                    precision=0,
-                    value=None
-                )
-                update_category = gr.Dropdown(
-                    choices=get_all_categories(),
-                    label="New Category",
-                    value=None
-                )
-                update_care_level = gr.Dropdown(
-                    choices=["Easy", "Moderate", "Difficult"],
-                    label="New Care Level",
-                    value=None
-                )
-                update_location = gr.Textbox(
-                    label="New Location",
-                    placeholder="Leave blank to keep current"
-                )
-                update_pot_size = gr.Dropdown(
-                    choices=[c[0] for c in Plant.POT_SIZE_CHOICES],
-                    label="New Pot Size",
-                    value=None
-                )
-                update_plant_btn = gr.Button("✏️ Update Plant")
-                update_plant_status = gr.Textbox(label="Result", interactive=False)
+            # Refresh plants button at top
+            with gr.Row():
+                refresh_plants_btn = gr.Button("🔄 Refresh Plants List")
+                plants_status = gr.Textbox(label="Status", interactive=False, value="")
+            
+            # List plants section
+            with gr.Row():
+                with gr.Column():
+                    gr.Markdown("#### Your Plants")
+                    plants_list = gr.JSON(label="Plants List")
+                    
+                    refresh_plants_btn.click(
+                        fn=ui_load_user_plants,
+                        inputs=[auth_state],
+                        outputs=[plants_list, plants_status]
+                    )
+            
+            # Create plant section
+            with gr.Row():
+                with gr.Column():
+                    gr.Markdown("#### Add New Plant")
+                    plant_name = gr.Textbox(
+                        label="Plant Name/Nickname",
+                        placeholder="e.g., My Aloe Vera"
+                    )
+                    plant_category = gr.Dropdown(
+                        choices=get_all_categories(),
+                        label="Category",
+                        value="foliage_plant"
+                    )
+                    plant_care_level = gr.Dropdown(
+                        choices=["Easy", "Moderate", "Difficult"],
+                        label="Care Level"
+                    )
+                    plant_location = gr.Textbox(
+                        label="Location (Optional)",
+                        placeholder="e.g., Living Room Window"
+                    )
+                    plant_pot_size = gr.Dropdown(
+                        choices=[c[0] for c in Plant.POT_SIZE_CHOICES],
+                        label="Container Size",
+                        value="medium"
+                    )
+                    create_plant_btn = gr.Button("🌱 Create Plant")
+                    create_plant_status = gr.Textbox(label="Result", interactive=False)
+                    
+                    create_plant_btn.click(
+                        fn=ui_handle_create_plant,
+                        inputs=[plant_name, plant_category, plant_care_level, plant_location, plant_pot_size, auth_state],
+                        outputs=[create_plant_status]
+                    )
                 
-                update_plant_btn.click(
-                    fn=ui_handle_update_plant,
-                    inputs=[update_plant_id, update_category, update_care_level, update_location, update_pot_size, auth_state],
-                    outputs=[update_plant_status]
-                )
-        
-        # Delete plant section
-        with gr.Row():
-            with gr.Column():
-                gr.Markdown("#### Delete Plant")
-                delete_plant_id = gr.Number(
-                    label="Plant ID",
-                    precision=0,
-                    value=None
-                )
-                delete_plant_confirm = gr.Checkbox(
-                    label="I understand logs will also be deleted",
-                    value=False
-                )
-                delete_plant_btn = gr.Button("🗑️ Delete Plant", variant="stop")
-                delete_plant_status = gr.Textbox(label="Result", interactive=False)
-                
-                delete_plant_btn.click(
-                    fn=ui_handle_delete_plant,
-                    inputs=[delete_plant_id, delete_plant_confirm, auth_state],
-                    outputs=[delete_plant_status]
-                )
+                with gr.Column():
+                    gr.Markdown("#### Update Plant")
+                    update_plant_id = gr.Number(
+                        label="Plant ID",
+                        precision=0,
+                        value=None
+                    )
+                    update_category = gr.Dropdown(
+                        choices=get_all_categories(),
+                        label="New Category",
+                        value=None
+                    )
+                    update_care_level = gr.Dropdown(
+                        choices=["Easy", "Moderate", "Difficult"],
+                        label="New Care Level",
+                        value=None
+                    )
+                    update_location = gr.Textbox(
+                        label="New Location",
+                        placeholder="Leave blank to keep current"
+                    )
+                    update_pot_size = gr.Dropdown(
+                        choices=[c[0] for c in Plant.POT_SIZE_CHOICES],
+                        label="New Pot Size",
+                        value=None
+                    )
+                    update_plant_btn = gr.Button("💾 Update Plant")
+                    update_plant_status = gr.Textbox(label="Result", interactive=False)
+                    
+                    update_plant_btn.click(
+                        fn=ui_handle_update_plant,
+                        inputs=[update_plant_id, update_category, update_care_level, update_location, update_pot_size, auth_state],
+                        outputs=[update_plant_status]
+                    )
+            
+            # Delete plant section
+            with gr.Row():
+                with gr.Column():
+                    gr.Markdown("#### Delete Plant")
+                    delete_plant_id = gr.Number(
+                        label="Plant ID",
+                        precision=0,
+                        value=None
+                    )
+                    delete_plant_confirm = gr.Checkbox(
+                        label="I understand logs will also be deleted",
+                        value=False
+                    )
+                    delete_plant_btn = gr.Button("🗑️ Delete Plant", variant="stop")
+                    delete_plant_status = gr.Textbox(label="Result", interactive=False)
+                    
+                    delete_plant_btn.click(
+                        fn=ui_handle_delete_plant,
+                        inputs=[delete_plant_id, delete_plant_confirm, auth_state],
+                        outputs=[delete_plant_status]
+                    )
 
         # ========================================================================
         # TAB 3: LOGS MANAGEMENT
         # ========================================================================
         with gr.Tab("📝 Logs"):
             gr.Markdown("### Track Plant Care Activities")
-        
-        with gr.Row():
-            plant_id_for_logs = gr.Number(
-                label="Plant ID",
-                precision=0,
-                value=None
-            )
-            plant_check_btn = gr.Button("🔍 Check Plant")
-            plant_check_out = gr.JSON(label="Plant Info")
             
-            plant_check_btn.click(
-                fn=ui_check_plant,
-                inputs=[plant_id_for_logs, auth_state],
-                outputs=[plant_check_out]
-            )
-        
-        # Create log section
-        with gr.Row():
-            with gr.Column():
-                gr.Markdown("#### Log Care Activity")
-                log_type = gr.Dropdown(
-                    choices=['water', 'fertilize', 'prune'],
-                    label="Activity Type",
-                    value="water"
-                )
-                sunlight_hours = gr.Number(
-                    label="Sunlight Hours (optional)",
-                    precision=1,
-                    minimum=0,
-                    maximum=24,
+            with gr.Row():
+                plant_id_for_logs = gr.Number(
+                    label="Plant ID",
+                    precision=0,
                     value=None
                 )
-                create_log_btn = gr.Button("➕ Create Log")
-                create_log_status = gr.Textbox(label="Result", interactive=False)
+                plant_check_btn = gr.Button("🔍 Check Plant")
+                plant_check_out = gr.JSON(label="Plant Info")
                 
-                create_log_btn.click(
-                    fn=ui_handle_create_log,
-                    inputs=[plant_id_for_logs, log_type, sunlight_hours, auth_state],
+                plant_check_btn.click(
+                    fn=ui_check_plant,
+                    inputs=[plant_id_for_logs, auth_state],
+                    outputs=[plant_check_out]
+                )
+            
+            # Create log section
+            with gr.Row():
+                with gr.Column():
+                    gr.Markdown("#### Log Care Activity")
+                    log_type = gr.Dropdown(
+                        choices=['water', 'fertilize', 'prune'],
+                        label="Activity Type",
+                        value="water"
+                    )
+                    sunlight_hours = gr.Number(
+                        label="Sunlight Hours (optional)",
+                        precision=1,
+                        minimum=0,
+                        maximum=24,
+                        value=None
+                    )
+                    create_log_btn = gr.Button("📝 Log Activity")
+                    create_log_status = gr.Textbox(label="Result", interactive=False)
+                    
+                    create_log_btn.click(
+                        fn=ui_handle_create_log,
+                        inputs=[plant_id_for_logs, log_type, sunlight_hours, auth_state],
                     outputs=[create_log_status]
                 )
             
@@ -400,7 +397,7 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
                     maximum=24,
                     value=None
                 )
-                update_log_btn = gr.Button("✏️ Update Log")
+                update_log_btn = gr.Button("💾 Update Log")
                 update_log_status = gr.Textbox(label="Result", interactive=False)
                 
                 update_log_btn.click(
@@ -408,18 +405,18 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
                     inputs=[log_id, update_log_type, update_sunlight_hours, auth_state],
                     outputs=[update_log_status]
                 )
-        
-        # View logs section
-        with gr.Row():
-            gr.Markdown("#### Care History")
-            view_logs_btn = gr.Button("📋 View Plant Logs")
-            logs_display = gr.JSON(label="Plant Logs")
             
-            view_logs_btn.click(
-                fn=ui_load_plant_logs,
-                inputs=[plant_id_for_logs, auth_state],
-                outputs=[logs_display]
-            )
+            # View logs section
+            with gr.Row():
+                gr.Markdown("#### Care History")
+                view_logs_btn = gr.Button("📖 View Care History")
+                logs_display = gr.JSON(label="Plant Logs")
+                
+                view_logs_btn.click(
+                    fn=ui_load_plant_logs,
+                    inputs=[plant_id_for_logs, auth_state],
+                    outputs=[logs_display]
+                )
 
     # ========================================================================
     # EVENT HANDLERS: Toggle visibility between auth and app sections
@@ -429,11 +426,15 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
     login_btn.click(
         fn=login_and_load_account,
         inputs=[login_username, login_password, auth_state],
-        outputs=[auth_state, login_status, account_details]
+        outputs=[auth_state, login_status]
     ).then(
         fn=toggle_tabs,
         inputs=[auth_state],
         outputs=[auth_section, app_section]
+    ).then(
+        fn=lambda auth: ui_load_account_details(auth),
+        inputs=[auth_state],
+        outputs=[account_details]
     )
     
     # After successful registration, show app section
