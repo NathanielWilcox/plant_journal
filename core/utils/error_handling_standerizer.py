@@ -21,6 +21,30 @@ def handle_api_response(response: Response) -> Dict[str, Any]:
         elif response.status_code == 204:
             print("No Content Response")
             return {"success": True, "data": None}
+        elif response.status_code == 400:
+            # Bad request - try to extract meaningful error message
+            try:
+                error_data = response.json()
+                print(f"[DEBUG] 400 error_data: {error_data}")
+                # Handle various error formats
+                if isinstance(error_data, dict):
+                    # Check if there's an "error" key (custom format)
+                    if "error" in error_data:
+                        return {"error": str(error_data["error"]), "status_code": 400}
+                    # DRF returns field errors as dict like {"field": ["error message"]}
+                    error_msg = next(iter(error_data.values())) if error_data else "Invalid input"
+                    if isinstance(error_msg, list):
+                        error_msg = error_msg[0]
+                    print(f"[DEBUG] Extracted error message: {error_msg}")
+                    return {"error": str(error_msg), "status_code": 400}
+                else:
+                    return {"error": "Invalid input", "status_code": 400}
+            except Exception as e:
+                print(f"[DEBUG] Exception in 400 handler: {e}, response.text: {response.text}")
+                return {"error": response.text or "Bad request", "status_code": 400}
+        elif response.status_code == 401:
+            print("Authentication failed - token expired or invalid")
+            return {"error": "Unauthorized", "status_code": 401, "is_auth_error": True}
         elif response.status_code == 404:
             print("Resource not found")
             return {"error": "Resource not found", "status_code": 404}

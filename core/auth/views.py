@@ -92,7 +92,15 @@ def register_view(request):
             'user': UserSerializer(user).data
         }, status=201)
     
-    return Response(serializer.errors, status=400)
+    # Extract first error message for cleaner display
+    error_dict = serializer.errors
+    first_error = None
+    for field, errors in error_dict.items():
+        if isinstance(errors, list) and errors:
+            first_error = errors[0]
+            break
+    
+    return Response({"error": first_error or "Registration failed"}, status=400)
 
 
 @api_view(['POST'])

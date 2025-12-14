@@ -118,9 +118,24 @@ def ui_handle_register(username: str, email: str, password: str, password_confir
         return auth_state, "❌ All fields are required"
     
     result = register_user(username, email, password)
+    print(f"[UI REGISTER] Result from register_user: {result}, Type: {type(result)}")
     
     if isinstance(result, dict) and "error" in result:
-        return auth_state, f"❌ Error: {result['error']}"
+        error_msg = result['error']
+        print(f"[UI REGISTER] Error detected: {error_msg}")
+        # If error includes field info, clean it up
+        if isinstance(error_msg, str) and '[' in error_msg:
+            error_msg = error_msg.split('[')[0].strip()
+        return auth_state, f"❌ Error: {error_msg}"
+    
+    # If registration succeeded, update auth state with token
+    token = result.get("token") if isinstance(result, dict) else None
+    user_data = result.get("user") if isinstance(result, dict) else None
+    
+    if token:
+        auth_state["token"] = token
+        auth_state["user"] = user_data
+        return auth_state, "✅ Registration successful! Logged in."
     
     return auth_state, "✅ Registration successful! Please login."
 

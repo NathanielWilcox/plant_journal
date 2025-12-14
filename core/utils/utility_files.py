@@ -21,12 +21,16 @@ def api_request(method: str, path: str, **kwargs):
     try:
         url = f"{API_BASE_URL.rstrip('/')}/{path.lstrip('/')}"
         headers = kwargs.pop("headers", {})
+        print(f"[API REQUEST] {method.upper()} {url}")
         response = requests.request(method, url, headers=headers, **kwargs)
+        print(f"[API RESPONSE] Status: {response.status_code}")
         result = handle_api_response(response)   # uses your centralized handler
+        print(f"[API RESULT] {result}")
         if "error" in result:
             return result
         return result.get("data")
     except Exception as e:
+        print(f"[API ERROR] Exception: {e}")
         return format_error_response(e)
 
 @with_auth_retry(max_retries=3)
