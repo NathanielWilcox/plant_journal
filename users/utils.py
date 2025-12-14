@@ -48,6 +48,8 @@ def register_user(
 def update_user_account(
     email: Optional[str] = None,
     password: Optional[str] = None,
+    username: Optional[str] = None,
+    display_name: Optional[str] = None,
     **kwargs
 ) -> Dict:
     """Update current user account details via /users/me/ endpoint (PATCH)"""
@@ -56,6 +58,10 @@ def update_user_account(
         data["email"] = email
     if password is not None:
         data["password"] = password
+    if username is not None:
+        data["username"] = username
+    if display_name is not None:
+        data["display_name"] = display_name
 
     headers = kwargs.get("headers") or token_validator.get_headers()
     result = api_request("patch", "users/me/", json=data, headers=headers)
@@ -134,7 +140,7 @@ def ui_load_account_details(auth_state: Dict) -> dict:
     # result should be a dict with user data
     return result if isinstance(result, dict) else {}
 
-def ui_handle_account_update(email: str, password: str, auth_state: Dict) -> str:
+def ui_handle_account_update(email: str, password: str, username: str, display_name: str, auth_state: Dict) -> str:
     """UI handler to update user account"""
     from core.utils.utility_files import is_authenticated, get_auth_headers
 
@@ -145,6 +151,8 @@ def ui_handle_account_update(email: str, password: str, auth_state: Dict) -> str
     result = update_user_account(
         email=email if email else None,
         password=password if password else None,
+        username=username if username else None,
+        display_name=display_name if display_name else None,
         headers=headers
     )
     

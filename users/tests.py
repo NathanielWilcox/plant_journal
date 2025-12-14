@@ -197,3 +197,36 @@ class TestUserMeEndpoint:
         # Plant should be deleted due to cascade
         from plants.models import Plant
         assert not Plant.objects.filter(id=plant_id).exists()
+    def test_update_user_me_username(self, api_client_with_user):
+        """Test updating username"""
+        data = {'username': 'newusername'}
+        response = api_client_with_user.patch('/api/users/me/', data)
+        assert response.status_code == status.HTTP_200_OK
+        
+        # Refresh user from database
+        api_client_with_user.user.refresh_from_db()
+        assert api_client_with_user.user.username == 'newusername'
+
+    def test_update_user_me_display_name(self, api_client_with_user):
+        """Test updating display_name"""
+        data = {'display_name': 'John Doe'}
+        response = api_client_with_user.patch('/api/users/me/', data)
+        assert response.status_code == status.HTTP_200_OK
+        
+        # Refresh user from database
+        api_client_with_user.user.refresh_from_db()
+        assert api_client_with_user.user.display_name == 'John Doe'
+
+    def test_update_user_me_username_and_display_name(self, api_client_with_user):
+        """Test updating both username and display_name together"""
+        data = {
+            'username': 'newusername',
+            'display_name': 'Jane Smith'
+        }
+        response = api_client_with_user.patch('/api/users/me/', data)
+        assert response.status_code == status.HTTP_200_OK
+        
+        # Refresh user from database
+        api_client_with_user.user.refresh_from_db()
+        assert api_client_with_user.user.username == 'newusername'
+        assert api_client_with_user.user.display_name == 'Jane Smith'

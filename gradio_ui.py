@@ -59,6 +59,11 @@ def login_and_load_account(username: str, password: str, auth_state: dict) -> tu
         return auth_state, status, details
     return auth_state, status, {}
 
+def toggle_tabs(auth_state: dict) -> tuple:
+    """Toggle visibility between auth and app sections based on auth state"""
+    is_logged_in = is_authenticated(auth_state)
+    return gr.update(visible=not is_logged_in), gr.update(visible=is_logged_in)
+
 # ============================================================================
 # UI LAYOUT
 # ============================================================================
@@ -69,10 +74,13 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
     # STATE INITIALIZATION
     auth_state = gr.State(value=init_auth_state())
     
+    # Pre-define account_details for login handler
+    account_details = gr.JSON(label="Your Account", visible=False)
+    
     # ========================================================================
-    # TAB 1: AUTHENTICATION
+    # AUTHENTICATION SECTION (visible when NOT logged in)
     # ========================================================================
-    with gr.Tab("🔐 Login / Register"):
+    with gr.Column(visible=True) as auth_section:
         gr.Markdown("### User Authentication")
         
         with gr.Tabs():
@@ -99,7 +107,7 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
                 login_btn.click(
                     fn=login_and_load_account,
                     inputs=[login_username, login_password, auth_state],
-                    outputs=[auth_state, login_status]
+                    outputs=[auth_state, login_status, account_details]
                 ).then(
                     fn=lambda: ("", ""),
                     outputs=[login_username, login_password]
@@ -145,77 +153,78 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
                 )
 
     # ========================================================================
-    # TAB 2: ACCOUNT MANAGEMENT
+    # APPLICATION SECTION (visible when logged in)
     # ========================================================================
-    with gr.Tab("👤 Account"):
-        gr.Markdown("### Manage Your Account")
-        
-        with gr.Row():
-            with gr.Column():
-                # Get account details section
-                gr.Markdown("#### Account Details")
-                get_details_btn = gr.Button("📋 Refresh Account Details")
-                account_details = gr.JSON(label="Your Account")
+    with gr.Column(visible=False) as app_section:
+        with gr.Tabs():
+            # ========================================================================
+            # TAB 1: ACCOUNT MANAGEMENT
+            # ========================================================================
+            with gr.Tab("👤 Account"):
+                gr.Markdown("### Manage Your Account")
                 
-                get_details_btn.click(
-                    fn=ui_load_account_details,
-                    inputs=[auth_state],
-                    outputs=[account_details]
-                )
-            
-            with gr.Column():
-                # Update account section
-                gr.Markdown("#### Update Account")
-                update_email = gr.Textbox(
-                    label="New Email",
-                    placeholder="Leave blank to keep current",
-                    type="email"
-                )
-                update_password = gr.Textbox(
-                    label="New Password",
-                    placeholder="Leave blank to keep current",
-                    type="password"
-                )
-                update_btn = gr.Button("✏️ Update Account")
-                update_status = gr.Textbox(label="Update Result", interactive=False)
+                with gr.Row():
+                    with gr.Column():
+                        # Get account details section
+                        gr.Markdown("#### Account Details")
+                        get_details_btn = gr.Button("📋 Refresh Account Details")
+                        account_details = gr.JSON(label="Your Account", value={})
+                        
+                        get_details_btn.click(
+                            fn=ui_load_account_details,
+                            inputs=[auth_state],
+                            outputs=[account_details]
+                        )
+                    
+                    with gr.Column():
+                        # Update account section
+                        gr.Markdown("#### Update Account")
+                        update_username = gr.Textbox(
+                            label="New Username",
+                            placeholder="Leave blank to keep current"
+                        )
+                        update_display_name = gr.Textbox(
+                            label="Display Name (Alias)",
+                            placeholder="Leave blank to use username"
+                        )
+                        update_email = gr.Textbox(
+                            label="New Email",
+                            placeholder="Leave blank to keep current",
+                            type="email"
+                        )
+                        update_password = gr.Textbox(
+                            label="New Password",
+                            placeholder="Leave blank to keep current",
+                            type="password"
+                        )
+                        update_btn = gr.Button("✏️ Update Account")
+                        update_status = gr.Textbox(label="Update Result", interactive=False)
+                        
+                        update_btn.click(
+                            fn=ui_handle_account_update,
+                            inputs=[update_email, update_password, update_username, update_display_name, auth_state],
+                            outputs=[update_status]
+                        )
                 
-                update_btn.click(
-                    fn=ui_handle_account_update,
-                    inputs=[update_email, update_password, auth_state],
-                    outputs=[update_status]
-                )
-        
-        with gr.Row():
-            with gr.Column():
-                # Logout section
-                gr.Markdown("#### Logout")
-                logout_btn = gr.Button("🚪 Logout", size="lg")
-                logout_status = gr.Textbox(label="Logout Result", interactive=False)
-                
-                logout_btn.click(
-                    fn=ui_handle_logout,
-                    inputs=[auth_state],
-                    outputs=[auth_state, logout_status]
-                )
-            
-            with gr.Column():
-                # Delete account section
-                gr.Markdown("#### Delete Account")
-                delete_confirm = gr.Checkbox(label="I understand this cannot be undone", value=False)
-                delete_btn = gr.Button("🗑️ Delete Account", variant="stop")
-                delete_status = gr.Textbox(label="Delete Result", interactive=False)
-                
-                delete_btn.click(
-                    fn=ui_handle_delete_account,
-                    inputs=[delete_confirm, auth_state],
-                    outputs=[auth_state, delete_status]
-                )
+                with gr.Row():
+                    with gr.Column():
+                        # Logout section
+                        gr.Markdown("#### Logout")
+                        logout_btn = gr.Button("🚪 Logout", size="lg")
+                        logout_status = gr.Textbox(label="Logout Result", interactive=False)
+                    
+                    with gr.Column():
+                        # Delete account section
+                        gr.Markdown("#### Delete Account")
+                        delete_confirm = gr.Checkbox(label="I understand this cannot be undone", value=False)
+                        delete_btn = gr.Button("🗑️ Delete Account", variant="stop")
+                        delete_status = gr.Textbox(label="Delete Result", interactive=False)
 
-    # ========================================================================
-    # TAB 3: PLANTS MANAGEMENT
-    # ========================================================================
-    with gr.Tab("🌿 Plants"):
-        gr.Markdown("### Manage Your Plants")
+        # ========================================================================
+        # TAB 2: PLANTS MANAGEMENT
+        # ========================================================================
+        with gr.Tab("🌿 Plants"):
+            gr.Markdown("### Manage Your Plants")
         
         # Refresh plants button at top
         with gr.Row():
@@ -326,11 +335,11 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
                     outputs=[delete_plant_status]
                 )
 
-    # ========================================================================
-    # TAB 4: LOGS MANAGEMENT
-    # ========================================================================
-    with gr.Tab("📝 Logs"):
-        gr.Markdown("### Track Plant Care Activities")
+        # ========================================================================
+        # TAB 3: LOGS MANAGEMENT
+        # ========================================================================
+        with gr.Tab("📝 Logs"):
+            gr.Markdown("### Track Plant Care Activities")
         
         with gr.Row():
             plant_id_for_logs = gr.Number(
@@ -413,12 +422,55 @@ with gr.Blocks(title="🌿 Plant Journal") as demo:
             )
 
     # ========================================================================
-    # ADDITIONAL EVENT: Auto-load account details on successful login
+    # EVENT HANDLERS: Toggle visibility between auth and app sections
     # ========================================================================
+    
+    # After successful login, switch to app section
     login_btn.click(
         fn=login_and_load_account,
         inputs=[login_username, login_password, auth_state],
         outputs=[auth_state, login_status, account_details]
+    ).then(
+        fn=toggle_tabs,
+        inputs=[auth_state],
+        outputs=[auth_section, app_section]
+    )
+    
+    # After successful registration, show app section
+    reg_btn.click(
+        fn=ui_handle_register,
+        inputs=[reg_username, reg_email, reg_password, reg_password_confirm, auth_state],
+        outputs=[auth_state, reg_status]
+    ).then(
+        fn=ui_load_account_details,
+        inputs=[auth_state],
+        outputs=[account_details]
+    ).then(
+        fn=toggle_tabs,
+        inputs=[auth_state],
+        outputs=[auth_section, app_section]
+    )
+    
+    # After logout, switch back to auth section
+    logout_btn.click(
+        fn=ui_handle_logout,
+        inputs=[auth_state],
+        outputs=[auth_state, logout_status]
+    ).then(
+        fn=toggle_tabs,
+        inputs=[auth_state],
+        outputs=[auth_section, app_section]
+    )
+    
+    # After account deletion, switch back to auth section
+    delete_btn.click(
+        fn=ui_handle_delete_account,
+        inputs=[delete_confirm, auth_state],
+        outputs=[auth_state, delete_status]
+    ).then(
+        fn=toggle_tabs,
+        inputs=[auth_state],
+        outputs=[auth_section, app_section]
     )
 
 
