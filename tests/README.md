@@ -4,12 +4,13 @@
 
 1. [Quick Start](#quick-start)
 2. [Testing Project](#testing-project)
-3. [Adding New Tests](#adding-new-tests)
-4. [Verifying Changes](#verifying-changes)
-5. [Test Structure](#test-structure)
-6. [Running Specific Tests](#running-specific-tests)
-7. [Debugging Tests](#debugging-tests)
-8. [CI/CD Integration](#cicd-integration)
+3. [Complete Test List](#complete-test-list)
+4. [Adding New Tests](#adding-new-tests)
+5. [Verifying Changes](#verifying-changes)
+6. [Test Structure](#test-structure)
+7. [Running Specific Tests](#running-specific-tests)
+8. [Debugging Tests](#debugging-tests)
+9. [CI/CD Integration](#cicd-integration)
 
 ---
 
@@ -77,6 +78,230 @@ pytest -v
 
 - Fixtures use pytest-django `db` parameter for database access
 - API client fixtures create new `APIClient()` instances per user (prevents auth bleed)
+
+---
+
+## Complete Test List
+
+**Total Tests: 96** (87 unit/integration, 6 slow/e2e, 3 skipped)
+
+### 1. Authentication & User Flows (`tests/test_auth_flow.py`) - 14 Tests
+
+**Core Auth Tests:**
+
+- `test_register_login_flow` - Register and login workflow
+- `test_token_persists_across_requests` - JWT token persistence
+- `test_logout_invalidates_access` - Logout removes access
+
+**CRUD Tests:**
+
+- `test_create_list_retrieve_update_delete_plant` - Full plant lifecycle
+- `test_create_multiple_plants` - Create multiple plants
+- `test_create_list_retrieve_update_delete_log` - Full log lifecycle
+- `test_create_multiple_logs_for_plant` - Multiple logs per plant
+
+**Multi-User Isolation Tests:**
+
+- `test_user_journey_register_to_logout` - Complete user journey
+- `test_user_a_cannot_see_user_b_plants` - Data isolation (plants)
+- `test_user_a_cannot_update_user_b_plant` - Cannot modify other user's plant
+- `test_user_a_cannot_delete_user_b_plant` - Cannot delete other user's plant
+- `test_user_a_cannot_see_user_b_logs` - Data isolation (logs)
+- `test_user_a_cannot_create_log_for_user_b_plant` - Cannot log other user's plant
+- `test_each_user_can_create_own_data` - Each user isolated
+
+---
+
+### 2. End-to-End Workflows (`tests/test_e2e_workflows.py`) - 8 Tests
+
+**User Journey Tests:**
+
+- `test_new_user_full_journey` - Complete workflow from registration to logging care
+- `test_multiple_users_independent_workflows` - Multiple users working independently
+
+**Error Handling Tests:**
+
+- `test_handle_malformed_requests` - Invalid request format handling
+- `test_handle_unauthorized_access` - 401 error handling
+- `test_handle_nonexistent_resources` - 404 error handling
+
+**Data Integrity Tests:**
+
+- `test_cascade_delete_integrity` - Cascade delete on plant removal
+- `test_sunlight_hours_validation_e2e` - Sunlight validation workflow
+- `test_log_type_validation_e2e` - Log type validation workflow
+
+**Note:** First 2 tests marked `@pytest.mark.slow` (deselected by `run_tests.py`)
+
+---
+
+### 3. Gradio UI Tests (`tests/test_gradio_ui.py`) - 15 Tests
+
+**Authentication UI:**
+
+- `test_ui_login_success` - Login form submission
+- `test_ui_login_invalid_credentials` - Invalid credentials handling
+- `test_ui_register_success` - Registration form submission
+- `test_ui_login_not_authenticated` - UI without auth
+
+**Account Management:**
+
+- `test_ui_load_account_details` - Load user profile
+- `test_ui_operation_without_auth_shows_error` - Error on unauth operation
+
+**Plant Management:**
+
+- `test_ui_load_user_plants` - List user's plants
+- `test_ui_create_plant` - Create plant via UI
+- `test_ui_update_plant` - Update plant via UI
+- `test_ui_delete_plant` - Delete plant via UI
+- `test_ui_check_plant_exists` - Plant existence check
+
+**Log Management:**
+
+- `test_ui_create_log` - Log care activity
+- `test_ui_load_plant_logs` - Load plant's logs
+- `test_ui_update_log` - Update log entry
+- `test_ui_invalid_plant_id_handling` - Invalid plant ID handling
+
+**Note:** 3 tests marked `@pytest.mark.skip` (Gradio integration layer tests)
+
+---
+
+### 4. Plant Model Tests (`plants/tests/test_models.py`) - 25 Tests
+
+**Plant Model Tests:**
+
+- `test_plant_creation` - Basic plant creation
+- `test_plant_str_representation` - String representation
+- `test_plant_ownership` - User ownership link
+- `test_plant_added_at_timestamp` - Timestamp auto-set
+- `test_plant_invalid_pot_size` - Pot size validation
+- `test_plant_default_values` - Default field values
+
+**Log Model Tests:**
+
+- `test_log_creation` - Basic log creation
+- `test_log_timestamp_auto_set` - Timestamp auto-set
+- `test_log_sunlight_hours_validation_valid` - Valid sunlight hours
+- `test_log_sunlight_hours_validation_too_high` - Sunlight hours too high
+- `test_log_sunlight_hours_validation_negative` - Negative sunlight hours
+- `test_log_sunlight_hours_optional` - Optional sunlight hours
+- `test_log_cascade_delete` - Cascade delete on plant removal
+- `test_log_ordering` - Log ordering by timestamp
+
+**Plant Serializer Tests:**
+
+- `test_plant_serializer` - Plant serializer validation
+- `test_plant_create_update_serializer_valid` - Valid create/update
+- `test_plant_create_update_serializer_missing_name` - Missing required name
+- `test_plant_create_update_serializer_owner_read_only` - Owner field read-only
+
+**Log Serializer Tests:**
+
+- `test_log_serializer` - Log serializer validation
+- `test_log_create_serializer_valid` - Valid log creation
+- `test_log_create_serializer_plant_writable` - Plant field writable in create
+- `test_log_serializer_plant_read_only` - Plant field read-only in list
+- `test_log_create_serializer_missing_plant` - Missing plant field
+- `test_log_create_serializer_invalid_log_type` - Invalid log type
+
+---
+
+### 5. Plant View Tests (`plants/tests/test_views.py`) - 37 Tests
+
+**Plant List/Create Tests:**
+
+- `test_list_plants_authenticated` - List plants when authenticated
+- `test_list_plants_unauthenticated` - List plants requires auth
+- `test_list_plants_filters_by_owner` - List filters by owner
+- `test_create_plant_authenticated` - Create plant when authenticated
+- `test_create_plant_unauthenticated` - Create plant requires auth
+- `test_create_plant_missing_name` - Name field required
+
+**Plant Retrieve/Update/Delete Tests:**
+
+- `test_retrieve_plant_authenticated` - Retrieve single plant
+- `test_retrieve_plant_other_user` - Cannot retrieve other user's plant
+- `test_update_plant_authenticated` - Update plant fields
+- `test_update_plant_uses_patch` - Uses HTTP PATCH
+- `test_update_plant_other_user` - Cannot update other user's plant
+- `test_delete_plant_authenticated` - Delete plant
+- `test_delete_plant_other_user` - Cannot delete other user's plant
+- `test_delete_plant_cascades_logs` - Deleting plant removes logs
+- `test_plant_list_ordering` - Plants ordered by creation
+
+**Plant Logs Routes:**
+
+- `test_get_plant_logs_route` - Fetch logs for specific plant
+- `test_get_plant_logs_only_for_that_plant` - Logs scoped to plant
+- `test_get_plant_logs_other_user_plant` - Cannot access other user's logs
+- `test_get_plant_logs_nonexistent_plant` - 404 for missing plant
+
+**Log List/Create Tests:**
+
+- `test_create_log_authenticated` - Create log when authenticated
+- `test_create_log_unauthenticated` - Create log requires auth
+- `test_create_log_uses_create_serializer` - Uses CreateLogSerializer
+- `test_create_log_for_other_user_plant` - Cannot log other user's plant
+- `test_create_log_missing_plant` - Plant field required
+- `test_create_log_invalid_log_type` - Invalid log type rejected
+- `test_list_logs_authenticated` - List logs when authenticated
+- `test_list_logs_filters_by_owner` - List filters by owner
+
+**Log Retrieve/Update/Delete Tests:**
+
+- `test_retrieve_log_authenticated` - Retrieve single log
+- `test_retrieve_log_other_user` - Cannot retrieve other user's log
+- `test_update_log_with_patch` - Update log fields
+- `test_update_log_uses_create_serializer` - Uses CreateLogSerializer
+- `test_update_log_other_user` - Cannot update other user's log
+- `test_delete_log_authenticated` - Delete log
+- `test_delete_log_other_user` - Cannot delete other user's log
+- `test_log_list_ordering` - Logs ordered by timestamp
+
+---
+
+## Test Organization Summary
+
+| Category | Count | Purpose | Speed |
+|----------|-------|---------|-------|
+| Auth Flow | 14 | User authentication, CRUD, multi-user isolation | Fast |
+| E2E Workflows | 8 | Complete user workflows, error handling | Varies |
+| UI Tests | 15 | Gradio interface functionality | Fast |
+| Models | 25 | ORM models, serializers, validation | Fast |
+| Views | 37 | API endpoints, permissions, data isolation | Fast |
+| **TOTAL** | **96** | **Full coverage of functionality** | **~35s** |
+
+---
+
+## Running Specific Test Categories
+
+```bash
+# Just auth tests
+pytest tests/test_auth_flow.py -v
+
+# Just plant view tests
+pytest plants/tests/test_views.py -v
+
+# Just model tests
+pytest plants/tests/test_models.py -v
+
+# By marker (unit only, fast)
+pytest -m unit -v
+
+# By marker (skip slow tests)
+pytest -m "not slow" -v
+
+# By pattern
+pytest -k "test_user" -v
+
+# With coverage
+pytest --cov=plants --cov=users --cov-report=term-missing
+```
+
+---
+
 - Serializer validation properly returns 400 errors (not 500)
 - Owner auto-assigned during model creation via `perform_create()`
 - PlantCreateUpdateSerializer includes owner/id/added_at as read-only fields
