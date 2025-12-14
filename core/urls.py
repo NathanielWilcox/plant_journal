@@ -23,6 +23,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 from core.auth.views import login_view, register_view
 from core.auth.views import logout_view
 
@@ -42,6 +43,12 @@ urlpatterns = [
 
     # Browsable API login
     path('api-auth/', include('rest_framework.urls')),
+    
+    # Swagger/OpenAPI documentation
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    
     # path('', RedirectView.as_view(url='/api/', permanent=False)),
     path('', RedirectView.as_view(url='http://127.0.0.1:7860/', permanent=False)),  # 👈 root goes to Gradio
 
